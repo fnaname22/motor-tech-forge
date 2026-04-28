@@ -6,6 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { StarRating } from "./StarRating";
 
 export const ProductCard = ({ product }: { product: Product }) => {
   const { add, open } = useCart();
@@ -51,6 +52,10 @@ export const ProductCard = ({ product }: { product: Product }) => {
       <div className="p-4 flex flex-col gap-2 flex-1">
         <span className="text-[10px] font-bold uppercase tracking-wider text-brand-gray">{product.subcategoryName}</span>
         <h3 className="text-sm font-semibold leading-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+        <div className="flex items-center gap-1.5">
+          <StarRating rating={product.rating} size="xs" />
+          <span className="text-[11px] text-muted-foreground">({product.reviewsCount} avaliações)</span>
+        </div>
 
         <div className="mt-auto pt-2">
           {product.oldPrice && (

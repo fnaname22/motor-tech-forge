@@ -11,6 +11,9 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { ChevronRight, Heart, ShoppingCart, Star, Truck, ShieldCheck, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { TrustBadge, PaymentIcons } from "@/components/trust/TrustBadge";
+import { ReviewsSection } from "@/components/product/ReviewsSection";
+import { Seo } from "@/components/seo/Seo";
 
 const ProductPage = () => {
   const { id = "" } = useParams();
@@ -33,6 +36,11 @@ const ProductPage = () => {
 
   return (
     <div className="container py-6 lg:py-10">
+      <Seo
+        title={`${product.name} — MotorTech Parts`}
+        description={product.shortDescription}
+        image={product.image}
+      />
       <nav className="flex items-center text-sm text-muted-foreground mb-6 flex-wrap">
         <Link to="/" className="hover:text-primary">Home</Link>
         <ChevronRight className="h-3 w-3 mx-1" />
@@ -109,6 +117,15 @@ const ProductPage = () => {
             {has(product.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
           </Button>
 
+          {/* TRUST BADGE + PAYMENT ICONS */}
+          <div className="mt-4 space-y-3">
+            <TrustBadge />
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-muted-foreground font-semibold">Aceitamos:</span>
+              <PaymentIcons />
+            </div>
+          </div>
+
           <div className="mt-6 grid grid-cols-3 gap-3 text-center text-xs">
             <div className="border rounded p-3"><Truck className="h-5 w-5 text-primary mx-auto mb-1" />Frete grátis</div>
             <div className="border rounded p-3"><ShieldCheck className="h-5 w-5 text-primary mx-auto mb-1" />Garantia 12 meses</div>
@@ -138,8 +155,7 @@ const ProductPage = () => {
           </table>
         </TabsContent>
         <TabsContent value="rev" className="py-6 max-w-3xl">
-          <p className="text-muted-foreground">Nota média: <strong className="text-foreground">{product.rating.toFixed(1)}</strong> de 5 ({product.reviewsCount} avaliações).</p>
-          <p className="text-sm mt-2 text-muted-foreground italic">"Excelente produto, entrega rápida e acabamento perfeito!" — Cliente verificado</p>
+          <ReviewsSection productId={product.id} />
         </TabsContent>
       </Tabs>
 
