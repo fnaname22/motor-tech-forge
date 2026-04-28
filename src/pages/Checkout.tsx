@@ -160,15 +160,22 @@ const Checkout = () => {
         </div>
 
         {step < 3 && (
-          <aside className="lg:sticky lg:top-32 self-start border rounded-lg p-5 bg-muted/30 h-fit">
-            <h3 className="font-display text-lg uppercase tracking-wider mb-3">Resumo</h3>
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between"><span>Subtotal</span><span>{formatBRL(subtotal)}</span></div>
-              <div className="flex justify-between"><span>Frete</span><span>{shipping === 0 ? "Grátis" : formatBRL(shipping)}</span></div>
-              <div className="border-t mt-2 pt-2 flex justify-between text-lg font-extrabold">
-                <span>Total</span><span className="text-primary">{formatBRL(total)}</span>
+          <aside className="lg:sticky lg:top-32 self-start space-y-3 h-fit">
+            <div className="border rounded-lg p-5 bg-muted/30">
+              <h3 className="font-display text-lg uppercase tracking-wider mb-3">Resumo</h3>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between"><span>Subtotal</span><span>{formatBRL(subtotal)}</span></div>
+                <div className="flex justify-between"><span>Frete</span><span>{shipping === 0 ? "Grátis" : formatBRL(shipping)}</span></div>
+                <div className="border-t mt-2 pt-2 flex justify-between text-lg font-extrabold">
+                  <span>Total</span><span className="text-primary">{formatBRL(total)}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">em até 3x sem juros</div>
               </div>
-              <div className="text-xs text-muted-foreground">em até 3x sem juros</div>
+            </div>
+            <TrustBadge />
+            <div className="border rounded-lg p-4 bg-card">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Formas de pagamento aceitas</div>
+              <PaymentIcons />
             </div>
           </aside>
         )}
