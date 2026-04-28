@@ -3,6 +3,9 @@ import { ArrowRight, Truck, ShieldCheck, CreditCard, Headphones, Wrench, Lightbu
 import { Button } from "@/components/ui/button";
 import { categories, bestSellers } from "@/data/catalog";
 import { ProductCard } from "@/components/product/ProductCard";
+import { GoogleReviews } from "@/components/trust/GoogleReviews";
+import { Newsletter } from "@/components/trust/Newsletter";
+import { Seo } from "@/components/seo/Seo";
 import hero from "@/assets/hero.jpg";
 
 const catIcons: Record<string, JSX.Element> = {
@@ -15,6 +18,10 @@ const catIcons: Record<string, JSX.Element> = {
 const Index = () => {
   return (
     <>
+      <Seo
+        title="MotorTech Parts — Peças e Acessórios Automotivos"
+        description="Faróis LED, lanternas, grades, ponteiras e acessórios automotivos. Frete grátis acima de R$ 299 e parcelamento em 12x sem juros."
+      />
       {/* HERO */}
       <section className="relative bg-brand-black text-white overflow-hidden">
         <img src={hero} alt="MotorTech" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-60" />
@@ -121,6 +128,12 @@ const Index = () => {
           {bestSellers().map((p) => <ProductCard key={p.id} product={p} />)}
         </div>
       </section>
+
+      {/* GOOGLE REVIEWS */}
+      <GoogleReviews />
+
+      {/* NEWSLETTER */}
+      <Newsletter />
     </>
   );
 };
