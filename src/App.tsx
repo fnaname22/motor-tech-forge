@@ -47,8 +47,7 @@ const App = () => (
             </Routes>
           </CartProvider>
         </WishlistProvider>
-      </Toaster>
-    </BrowserRouter>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
