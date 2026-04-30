@@ -19,6 +19,9 @@ import TrocasDevolucoes from "./pages/TrocasDevolucoes";
 import PrazoEntrega from "./pages/PrazoEntrega";
 import ComoComprar from "./pages/ComoComprar";
 
+import Admin from "./pages/Admin";
+import Auth from "./pages/Auth";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -42,6 +45,8 @@ const App = () => (
                 <Route path="/trocas-e-devolucoes" element={<TrocasDevolucoes />} />
                 <Route path="/prazo-de-entrega" element={<PrazoEntrega />} />
                 <Route path="/como-comprar" element={<ComoComprar />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/auth" element={<Auth />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>

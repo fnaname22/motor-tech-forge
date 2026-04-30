@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { TrustBadge, PaymentIcons } from "@/components/trust/TrustBadge";
 
+import { useViaCep } from "@/hooks/use-viacep";
+
 const steps = [
   { key: "cart", label: "Carrinho", icon: ShoppingBag },
   { key: "address", label: "Endereço de Entrega", icon: MapPin },
@@ -22,7 +24,40 @@ const Checkout = () => {
   const { items, subtotal, clear } = useCart();
   const [step, setStep] = useState(0);
   const [payment, setPayment] = useState("pix");
+  const { fetchAddress, loading: loadingCep } = useViaCep();
   const navigate = useNavigate();
+
+  const [addressData, setAddressData] = useState({
+    name: "",
+    cpf: "",
+    cep: "",
+    phone: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: ""
+  });
+
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, "");
+    setAddressData({ ...addressData, cep: val });
+
+    if (val.length === 8) {
+      const data = await fetchAddress(val);
+      if (data) {
+        setAddressData(prev => ({
+          ...prev,
+          cep: val,
+          street: data.logradouro,
+          neighborhood: data.bairro,
+          city: data.localidade,
+          state: data.uf
+        }));
+      }
+    }
+  };
 
   const shipping = subtotal >= 299 ? 0 : 29.9;
   const total = subtotal + shipping;
@@ -93,19 +128,20 @@ const Checkout = () => {
             <form onSubmit={(e) => { e.preventDefault(); next(); }} className="space-y-4">
               <h2 className="font-display text-2xl uppercase tracking-wider mb-3">Endereço de Entrega</h2>
               <div className="grid sm:grid-cols-2 gap-3">
-                <div><Label>Nome completo</Label><Input required /></div>
-                <div><Label>CPF</Label><Input required placeholder="000.000.000-00" /></div>
-                <div><Label>CEP</Label><Input required placeholder="00000-000" /></div>
-                <div><Label>Telefone</Label><Input required placeholder="(11) 90000-0000" /></div>
-                <div className="sm:col-span-2"><Label>Endereço</Label><Input required /></div>
-                <div><Label>Número</Label><Input required /></div>
-                <div><Label>Complemento</Label><Input /></div>
-                <div><Label>Bairro</Label><Input required /></div>
-                <div><Label>Cidade</Label><Input required /></div>
+                <div><Label>Nome completo</Label><Input required value={addressData.name} onChange={e => setAddressData({...addressData, name: e.target.value})} /></div>
+                <div><Label>CPF</Label><Input required placeholder="000.000.000-00" value={addressData.cpf} onChange={e => setAddressData({...addressData, cpf: e.target.value})} /></div>
+                <div><Label>CEP</Label><Input required placeholder="00000-000" value={addressData.cep} onChange={handleCepChange} maxLength={8} /></div>
+                <div><Label>Telefone</Label><Input required placeholder="(11) 90000-0000" value={addressData.phone} onChange={e => setAddressData({...addressData, phone: e.target.value})} /></div>
+                <div className="sm:col-span-2"><Label>Rua / Logradouro</Label><Input required value={addressData.street} onChange={e => setAddressData({...addressData, street: e.target.value})} /></div>
+                <div><Label>Número</Label><Input required value={addressData.number} onChange={e => setAddressData({...addressData, number: e.target.value})} /></div>
+                <div><Label>Complemento</Label><Input value={addressData.complement} onChange={e => setAddressData({...addressData, complement: e.target.value})} /></div>
+                <div><Label>Bairro</Label><Input required value={addressData.neighborhood} onChange={e => setAddressData({...addressData, neighborhood: e.target.value})} /></div>
+                <div><Label>Cidade</Label><Input required value={addressData.city} onChange={e => setAddressData({...addressData, city: e.target.value})} disabled /></div>
+                <div><Label>Estado</Label><Input required value={addressData.state} onChange={e => setAddressData({...addressData, state: e.target.value})} disabled /></div>
               </div>
               <div className="flex justify-between pt-2">
                 <Button type="button" variant="outline" onClick={prev}>Voltar</Button>
-                <Button type="submit">Próximo: Pagamento</Button>
+                <Button type="submit" disabled={loadingCep}>{loadingCep ? "Buscando CEP..." : "Próximo: Pagamento"}</Button>
               </div>
             </form>
           )}

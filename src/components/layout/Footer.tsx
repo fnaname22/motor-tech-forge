@@ -42,12 +42,12 @@ export const Footer = () => (
 
       <div>
         <h4 className="font-display text-lg text-white mb-3 tracking-wider">INSTITUCIONAL</h4>
-        <ul className="space-y-2 text-sm">
-          <li><Link to="/quem-somos" className="hover:text-primary transition">Quem Somos</Link></li>
-          <li><Link to="/como-comprar" className="hover:text-primary transition">Como Comprar</Link></li>
-          <li><Link to="/prazo-de-entrega" className="hover:text-primary transition">Prazo de Entrega</Link></li>
-          <li><Link to="/trocas-e-devolucoes" className="hover:text-primary transition">Trocas e Devoluções</Link></li>
-          <li><Link to="/politica-de-privacidade" className="hover:text-primary transition">Política de Privacidade</Link></li>
+        <ul className="space-y-2">
+          <li><Link to="/quem-somos" className="text-brand-gray hover:text-white transition-colors">Quem Somos</Link></li>
+          <li><Link to="/prazo-de-entrega" className="text-brand-gray hover:text-white transition-colors">Prazo de Entrega</Link></li>
+          <li><Link to="/trocas-e-devolucoes" className="text-brand-gray hover:text-white transition-colors">Trocas e Devoluções</Link></li>
+          <li><Link to="/politica-de-privacidade" className="text-brand-gray hover:text-white transition-colors">Política de Privacidade</Link></li>
+          <li><Link to="/admin" className="text-brand-gray hover:text-white transition-colors text-xs opacity-50 mt-4 block">Painel Administrativo</Link></li>
         </ul>
       </div>
 

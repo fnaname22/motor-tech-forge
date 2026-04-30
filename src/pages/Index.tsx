@@ -7,6 +7,7 @@ import { GoogleReviews } from "@/components/trust/GoogleReviews";
 import { Newsletter } from "@/components/trust/Newsletter";
 import { Seo } from "@/components/seo/Seo";
 import hero from "@/assets/hero.jpg";
+import { useProducts } from "@/hooks/use-products";
 
 const catIcons: Record<string, JSX.Element> = {
   acessorios: <Wrench className="h-8 w-8" />,
@@ -16,17 +17,34 @@ const catIcons: Record<string, JSX.Element> = {
 };
 
 const Index = () => {
+  const { data: dbProducts, isLoading } = useProducts();
+  
+  const bestSellersProducts = dbProducts 
+    ? dbProducts.filter(p => p.best_seller).map(p => ({
+        ...p,
+        image: p.images?.[0] || "",
+        shortDescription: p.short_description,
+        oldPrice: p.promotional_price,
+        rating: 5,
+        reviewsCount: 0
+      }))
+    : [];
+
+  const displayProducts = bestSellersProducts.length > 0 
+    ? bestSellersProducts 
+    : bestSellers();
+
   return (
     <>
       <Seo
         title="MotorTech Parts — Peças e Acessórios Automotivos"
         description="Faróis LED, lanternas, grades, ponteiras e acessórios automotivos. Frete grátis acima de R$ 299 e parcelamento em 12x sem juros."
       />
+      
       {/* HERO */}
       <section className="relative bg-brand-black text-white overflow-hidden">
         <img src={hero} alt="MotorTech" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-r from-brand-black via-brand-black/70 to-transparent" />
-        {/* Speed line streaks */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/4 left-0 w-full h-1 bg-gradient-speed animate-speed-streak" />
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gradient-speed animate-speed-streak" style={{ animationDelay: "0.6s" }} />
@@ -125,14 +143,15 @@ const Index = () => {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {bestSellers().map((p) => <ProductCard key={p.id} product={p} />)}
+          {isLoading ? (
+            Array(4).fill(0).map((_, i) => <div key={i} className="h-[300px] bg-muted animate-pulse rounded-lg" />)
+          ) : (
+            displayProducts.map((p: any) => <ProductCard key={p.id} product={p} />)
+          )}
         </div>
       </section>
 
-      {/* GOOGLE REVIEWS */}
       <GoogleReviews />
-
-      {/* NEWSLETTER */}
       <Newsletter />
     </>
   );
