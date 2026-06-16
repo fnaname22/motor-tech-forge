@@ -2,7 +2,8 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Heart, Search, ShoppingCart, User, Menu, X, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import logo from "@/assets/logo.jpeg";
-import { categories, products } from "@/data/catalog";
+import { useCategories } from "@/hooks/use-categories";
+import { products } from "@/data/catalog";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { cn } from "@/lib/utils";
 export const Header = () => {
   const { count, open } = useCart();
   const { count: wishCount } = useWishlist();
+  const { categories } = useCategories();
   const [q, setQ] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openCat, setOpenCat] = useState<string | null>(null);

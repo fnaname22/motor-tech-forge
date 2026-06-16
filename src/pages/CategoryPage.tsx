@@ -1,6 +1,7 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { findCategory, productsByCategory } from "@/data/catalog";
+import { productsByCategory } from "@/data/catalog";
+import { useCategories } from "@/hooks/use-categories";
 import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCard";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,8 +13,9 @@ const CategoryPage = () => {
   const sub = params.get("sub");
   const [sort, setSort] = useState("relevance");
   const [loading, setLoading] = useState(true);
+  const { categories } = useCategories();
 
-  const category = findCategory(slug);
+  const category = categories.find((c) => c.slug === slug);
 
   useEffect(() => {
     setLoading(true);

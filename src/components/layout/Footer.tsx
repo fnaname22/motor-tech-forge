@@ -1,8 +1,10 @@
 import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, Clock, MessageCircle, ShieldCheck, Lock, Award, BadgeCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { categories } from "@/data/catalog";
+import { useCategories } from "@/hooks/use-categories";
 
-export const Footer = () => (
+export const Footer = () => {
+  const { categories } = useCategories();
+  return (
   <footer className="bg-brand-black text-white/80 mt-16 pb-20 lg:pb-0">
     {/* SECURITY SEALS */}
     <div className="border-b border-white/10 bg-black/40">
@@ -97,3 +99,4 @@ export const Footer = () => (
     </div>
   </footer>
 );
+};
