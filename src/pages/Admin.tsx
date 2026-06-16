@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import {
   Plus, Edit, Trash2, ShieldAlert, LayoutDashboard, Package,
   ShoppingBag, Tag, ChevronRight, ImagePlus, Star, Eye, EyeOff,
-  Loader2, RefreshCw, FolderPlus, Folder, FolderOpen,
+  Loader2, RefreshCw, FolderPlus, Folder, FolderOpen, Users,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +44,7 @@ const EMPTY_PRODUCT = {
 };
 type ProductForm = typeof EMPTY_PRODUCT;
 
-type Tab = "produtos" | "categorias" | "pedidos";
+type Tab = "produtos" | "categorias" | "pedidos" | "clientes";
 
 // ─────────────────────────────────────────────────────────────────────────────
 const Admin = () => {
@@ -52,6 +52,10 @@ const Admin = () => {
   const { categories, loading: catsLoading, refetch: refetchCats } = useCategories();
 
   const [tab, setTab] = useState<Tab>("produtos");
+
+  // ── Profiles (Customers) state ─────────────────────────────────────────────
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
 
   // ── Products state ─────────────────────────────────────────────────────────
   const [products, setProducts] = useState<Product[]>([]);
@@ -88,7 +92,12 @@ const Admin = () => {
   // Subcategories of the selected category in the product form
   const currentSubcats = categories.find((c) => c.slug === productForm.category)?.subcategories ?? [];
 
-  useEffect(() => { if (isAdmin) fetchProducts(); }, [isAdmin]);
+  useEffect(() => { 
+    if (isAdmin) {
+      fetchProducts();
+      fetchProfiles();
+    } 
+  }, [isAdmin]);
 
   // ── Slug auto-generator ────────────────────────────────────────────────────
   const toSlug = (text: string) =>
@@ -102,6 +111,14 @@ const Admin = () => {
     if (error) toast.error("Erro ao carregar produtos");
     else setProducts((data as Product[]) || []);
     setLoadingProducts(false);
+  };
+
+  const fetchProfiles = async () => {
+    setLoadingProfiles(true);
+    const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+    if (error) toast.error("Erro ao carregar clientes: " + error.message);
+    else setProfiles(data || []);
+    setLoadingProfiles(false);
   };
 
   const handleProductSubmit = async (e: React.FormEvent) => {
@@ -361,7 +378,7 @@ const Admin = () => {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-brand-black-2 border border-white/10 rounded-lg p-1 w-fit">
-        {(["produtos", "categorias", "pedidos"] as Tab[]).map((t) => (
+        {(["produtos", "categorias", "pedidos", "clientes"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-md text-sm font-medium uppercase tracking-wide transition-colors capitalize ${tab === t ? "bg-brand-red text-white" : "text-brand-gray hover:text-white"}`}>
             {t}
@@ -563,6 +580,67 @@ const Admin = () => {
           <ShoppingBag className="mx-auto h-12 w-12 mb-4 opacity-30" />
           <p className="text-lg font-medium text-white">Gestão de Pedidos</p>
           <p className="text-sm mt-2">Nenhum pedido registrado ainda.</p>
+        </div>
+      )}
+
+      {/* ══ TAB CLIENTES ═══════════════════════════════════════════════════════ */}
+      {tab === "clientes" && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-semibold uppercase tracking-wider flex items-center gap-2">
+              <Users className="h-5 w-5 text-brand-red" /> Clientes Cadastrados ({profiles.length})
+            </h2>
+            <Button onClick={fetchProfiles} variant="outline" size="sm" className="border-white/10 text-white hover:bg-white/5">
+              <RefreshCw className={`h-4 w-4 mr-2 ${loadingProfiles ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+          </div>
+
+          <div className="border border-white/10 rounded-lg overflow-hidden bg-brand-black-2">
+            <Table>
+              <TableHeader className="bg-white/5">
+                <TableRow className="border-white/10 hover:bg-transparent">
+                  <TableHead className="text-brand-gray">Nome</TableHead>
+                  <TableHead className="text-brand-gray">CPF</TableHead>
+                  <TableHead className="text-brand-gray">Telefone</TableHead>
+                  <TableHead className="text-brand-gray">Data de Cadastro</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loadingProfiles ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-12 text-brand-gray">
+                      <Loader2 className="animate-spin mx-auto h-6 w-6 mb-2" />
+                      Carregando clientes...
+                    </TableCell>
+                  </TableRow>
+                ) : profiles.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-12 text-brand-gray">
+                      Nenhum cliente cadastrado ainda.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  profiles.map((p) => (
+                    <TableRow key={p.id} className="border-white/5 hover:bg-white/5">
+                      <TableCell className="font-semibold text-white">{p.full_name || "Sem nome"}</TableCell>
+                      <TableCell className="text-brand-gray">{p.cpf || "Não informado"}</TableCell>
+                      <TableCell className="text-brand-gray">{p.phone || "Não informado"}</TableCell>
+                      <TableCell className="text-brand-gray">
+                        {p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }) : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 
