@@ -1,64 +1,32 @@
-import { Link, useParams, useNavigate } from "react-router-dom";
-import { useState, useMemo } from "react";
-import { findProduct, formatBRL, installments, Product } from "@/data/catalog";
-import { useProduct, useProducts } from "@/hooks/use-products";
-import { formatDbProduct } from "@/pages/CategoryPage";
+import { Link, useParams } from "react-router-dom";
+import { useState } from "react";
+import { findProduct, productsBySubcategory, formatBRL, installments } from "@/data/catalog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { toast } from "@/hooks/use-toast";
 import { ProductCard } from "@/components/product/ProductCard";
-import { ChevronRight, Heart, ShoppingCart, Star, Truck, ShieldCheck, Zap, Loader2 } from "lucide-react";
+import { ChevronRight, Heart, ShoppingCart, Star, Truck, ShieldCheck, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 import { TrustBadge, PaymentIcons } from "@/components/trust/TrustBadge";
 import { ReviewsSection } from "@/components/product/ReviewsSection";
 import { Seo } from "@/components/seo/Seo";
 
 const ProductPage = () => {
   const { id = "" } = useParams();
-  const isUuid = id.length > 10;
-
-  const { data: dbProduct, isLoading: loadingDb } = useProduct(isUuid ? id : "");
-  const staticProduct = !isUuid ? findProduct(id) : null;
-
-  const product: Product | null = useMemo(() => {
-    if (dbProduct) return formatDbProduct(dbProduct);
-    if (staticProduct) return staticProduct;
-    return null;
-  }, [dbProduct, staticProduct]);
-
-  const { data: relatedDb } = useProducts(product?.category);
-
-  const related = useMemo(() => {
-    if (!product) return [];
-    if (relatedDb && relatedDb.length > 0) {
-      return relatedDb.filter((p) => p.id !== product.id).slice(0, 4).map(formatDbProduct);
-    }
-    return [];
-  }, [product, relatedDb]);
-
+  const product = findProduct(id);
   const { add, open } = useCart();
   const { has, toggle } = useWishlist();
   const [imgIdx, setImgIdx] = useState(0);
   const [zoom, setZoom] = useState(false);
   const navigate = useNavigate();
 
-  if (loadingDb) {
-    return (
-      <div className="container py-20 text-center flex items-center justify-center gap-2 text-muted-foreground">
-        <Loader2 className="animate-spin h-5 w-5" /> Carregando produto...
-      </div>
-    );
-  }
+  if (!product) return <div className="container py-20 text-center">Produto não encontrado. <Link to="/" className="text-primary">Voltar</Link></div>;
 
-  if (!product) {
-    return (
-      <div className="container py-20 text-center">
-        Produto não encontrado. <Link to="/" className="text-primary font-bold">Voltar para o início</Link>
-      </div>
-    );
-  }
+  const related = productsBySubcategory(product.subcategory).filter((p) => p.id !== product.id).slice(0, 4);
 
   const handleAdd = (buyNow = false) => {
     add(product, 1);
@@ -90,108 +58,112 @@ const ProductPage = () => {
             onMouseLeave={() => setZoom(false)}
           >
             <img
-              src={product.images[imgIdx] || product.image}
+              src={product.images[imgIdx]}
               alt={product.name}
-              className={cn("w-full h-full object-cover transition-transform duration-300", zoom && "scale-125")}
+              className={cn("w-full h-full object-cover transition-transform duration-300", zoom && "scale-150")}
             />
-            {product.oldPrice && (
-              <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-bold px-2.5 py-1 rounded">
-                OFERTA
-              </span>
-            )}
           </div>
-          {product.images.length > 1 && (
-            <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
-              {product.images.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setImgIdx(i)}
-                  className={cn("h-20 w-20 rounded border-2 overflow-hidden shrink-0", i === imgIdx ? "border-primary" : "border-transparent opacity-70 hover:opacity-100")}
-                >
-                  <img src={img} alt="" className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-4 gap-2 mt-3">
+            {product.images.map((img, i) => (
+              <button key={i} onClick={() => setImgIdx(i)} className={cn("aspect-square bg-muted rounded border-2 overflow-hidden", imgIdx === i ? "border-primary" : "border-transparent")}>
+                <img src={img} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Details */}
-        <div className="space-y-6">
-          <div>
-            <div className="text-xs uppercase font-bold text-primary tracking-widest mb-1">{product.brand}</div>
-            <h1 className="font-display text-3xl sm:text-4xl uppercase tracking-wider">{product.name}</h1>
-            <div className="text-xs text-muted-foreground mt-1">SKU: {product.sku}</div>
+        {/* Info */}
+        <div>
+          <span className="inline-block text-xs font-bold tracking-widest text-primary">{product.brand}</span>
+          <h1 className="font-display text-3xl md:text-4xl uppercase tracking-wide mt-1 leading-tight">{product.name}</h1>
+          <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} className={cn("h-4 w-4", i < Math.round(product.rating) ? "fill-primary text-primary" : "text-muted")} />
+              ))}
+            </div>
+            <span>{product.rating.toFixed(1)} ({product.reviewsCount} avaliações)</span>
+            <span>•</span>
+            <span>SKU: {product.sku}</span>
           </div>
 
-          <div className="border-y py-4 space-y-1">
-            {product.oldPrice && (
-              <span className="text-sm text-muted-foreground line-through mr-2">
-                {formatBRL(product.oldPrice)}
-              </span>
-            )}
-            <div className="font-display text-4xl text-primary font-bold">
-              {formatBRL(product.price)}
-            </div>
-            <div className="text-xs font-semibold text-muted-foreground">
-              {installments(product.price)}
+          <div className="mt-6 bg-muted/40 p-5 rounded-lg border">
+            {product.oldPrice && <div className="text-sm text-muted-foreground line-through">{formatBRL(product.oldPrice)}</div>}
+            <div className="text-4xl font-extrabold text-primary leading-tight">{formatBRL(product.price)}</div>
+            <div className="text-sm text-muted-foreground mt-1">ou {installments(product.price, 3)}</div>
+            <div className="text-xs mt-1">À vista no PIX: <span className="font-bold text-foreground">{formatBRL(product.price * 0.95)}</span> (5% off)</div>
+          </div>
+
+          {/* Vehicle compatibility */}
+          <div className="mt-6">
+            <h3 className="font-display text-lg uppercase tracking-wider mb-2">Compatibilidade do Veículo</h3>
+            <div className="grid grid-cols-3 gap-2">
+              <Select><SelectTrigger><SelectValue placeholder="Ano" /></SelectTrigger><SelectContent>{["2024","2023","2022","2021","2020","2019","2018"].map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent></Select>
+              <Select><SelectTrigger><SelectValue placeholder="Marca" /></SelectTrigger><SelectContent>{["VW","Fiat","Chevrolet","Ford","Toyota","Honda","Hyundai"].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent></Select>
+              <Select><SelectTrigger><SelectValue placeholder="Modelo" /></SelectTrigger><SelectContent>{["Gol","Onix","HB20","Civic","Corolla","Strada"].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent></Select>
             </div>
           </div>
 
-          <p className="text-sm text-muted-foreground leading-relaxed">{product.shortDescription}</p>
-
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <Button size="lg" className="flex-1 font-bold tracking-wider" onClick={() => handleAdd(false)}>
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button size="lg" onClick={() => handleAdd(false)} className="font-bold tracking-wider">
               <ShoppingCart className="h-4 w-4 mr-2" /> ADICIONAR AO CARRINHO
             </Button>
-            <Button size="lg" variant="secondary" className="flex-1 font-bold tracking-wider" onClick={() => handleAdd(true)}>
-              COMPRAR AGORA
-            </Button>
-            <Button size="lg" variant="outline" className="px-4" onClick={() => toggle(product)}>
-              <Heart className={cn("h-5 w-5", has(product.id) && "fill-primary text-primary")} />
+            <Button size="lg" onClick={() => handleAdd(true)} variant="default" className="font-bold tracking-wider bg-foreground hover:bg-foreground/90">
+              <Zap className="h-4 w-4 mr-2" /> COMPRAR AGORA
             </Button>
           </div>
+          <Button variant="outline" className="w-full mt-3" onClick={() => toggle(product.id)}>
+            <Heart className={cn("h-4 w-4 mr-2", has(product.id) && "fill-primary text-primary")} />
+            {has(product.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+          </Button>
 
-          <TrustBadge />
+          {/* TRUST BADGE + PAYMENT ICONS */}
+          <div className="mt-4 space-y-3">
+            <TrustBadge />
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-muted-foreground font-semibold">Aceitamos:</span>
+              <PaymentIcons />
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-3 gap-3 text-center text-xs">
+            <div className="border rounded p-3"><Truck className="h-5 w-5 text-primary mx-auto mb-1" />Frete grátis</div>
+            <div className="border rounded p-3"><ShieldCheck className="h-5 w-5 text-primary mx-auto mb-1" />Garantia 12 meses</div>
+            <div className="border rounded p-3"><Zap className="h-5 w-5 text-primary mx-auto mb-1" />Envio rápido</div>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="mt-12">
-        <Tabs defaultValue="desc">
-          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent gap-4">
-            <TabsTrigger value="desc" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent font-display uppercase tracking-wider text-base py-3">
-              Descrição
-            </TabsTrigger>
-            <TabsTrigger value="specs" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent font-display uppercase tracking-wider text-base py-3">
-              Especificações
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="desc" className="pt-6 prose max-w-none text-muted-foreground text-sm">
-            <div dangerouslySetInnerHTML={{ __html: product.description }} />
-          </TabsContent>
-
-          <TabsContent value="specs" className="pt-6">
-            <dl className="grid sm:grid-cols-2 gap-4 text-sm max-w-xl">
+      <Tabs defaultValue="desc" className="mt-12">
+        <TabsList className="w-full justify-start border-b rounded-none bg-transparent h-auto p-0">
+          <TabsTrigger value="desc" className="font-display tracking-wider rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent">DESCRIÇÃO</TabsTrigger>
+          <TabsTrigger value="specs" className="font-display tracking-wider rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent">ESPECIFICAÇÕES</TabsTrigger>
+          <TabsTrigger value="rev" className="font-display tracking-wider rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent">AVALIAÇÕES</TabsTrigger>
+        </TabsList>
+        <TabsContent value="desc" className="py-6 max-w-3xl text-muted-foreground leading-relaxed">{product.description}</TabsContent>
+        <TabsContent value="specs" className="py-6 max-w-3xl">
+          <table className="w-full text-sm">
+            <tbody>
               {product.specs.map((s) => (
-                <div key={s.label} className="border p-3 rounded flex justify-between">
-                  <dt className="text-muted-foreground">{s.label}</dt>
-                  <dd className="font-semibold">{s.value}</dd>
-                </div>
+                <tr key={s.label} className="border-b">
+                  <th className="text-left py-2 pr-4 font-semibold w-1/3">{s.label}</th>
+                  <td className="py-2 text-muted-foreground">{s.value}</td>
+                </tr>
               ))}
-            </dl>
-          </TabsContent>
-        </Tabs>
-      </div>
+            </tbody>
+          </table>
+        </TabsContent>
+        <TabsContent value="rev" className="py-6 max-w-3xl">
+          <ReviewsSection productId={product.id} />
+        </TabsContent>
+      </Tabs>
 
-      {/* Related */}
       {related.length > 0 && (
-        <section className="mt-16 border-t pt-10">
-          <h2 className="font-display text-2xl uppercase tracking-wider mb-6">Produtos Relacionados</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {related.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
+        <section className="mt-14">
+          <h2 className="font-display text-2xl md:text-3xl uppercase tracking-wider mb-6">Produtos relacionados</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {related.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         </section>
       )}
