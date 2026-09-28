@@ -21,6 +21,7 @@ import ComoComprar from "./pages/ComoComprar";
 
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
+import CheckoutRetorno from "./pages/CheckoutRetorno";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
                 <Route path="/produto/:id" element={<ProductPage />} />
                 <Route path="/busca" element={<SearchPage />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/checkout/retorno" element={<CheckoutRetorno />} />
                 <Route path="/quem-somos" element={<QuemSomos />} />
                 <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
                 <Route path="/trocas-e-devolucoes" element={<TrocasDevolucoes />} />
