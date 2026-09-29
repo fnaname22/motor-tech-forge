@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { categories as catalogCategories } from "@/data/catalog";
 
 export type SubcategoryDB = {
   id: string;
@@ -18,7 +19,22 @@ export type CategoryDB = {
 };
 
 export const useCategories = () => {
-  const [categories, setCategories] = useState<CategoryDB[]>([]);
+  // Inicializa com as categorias do catalog para evitar piscar "Categoria não encontrada"
+  const defaultCats: CategoryDB[] = catalogCategories.map((c, i) => ({
+    id: c.slug,
+    slug: c.slug,
+    name: c.name,
+    sort_order: i + 1,
+    subcategories: c.subcategories.map((s, j) => ({
+      id: s.slug,
+      category_id: c.slug,
+      slug: s.slug,
+      name: s.name,
+      sort_order: j + 1,
+    })),
+  }));
+
+  const [categories, setCategories] = useState<CategoryDB[]>(defaultCats);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
@@ -28,7 +44,7 @@ export const useCategories = () => {
       .select("*")
       .order("sort_order", { ascending: true });
 
-    if (catErr || !cats) {
+    if (catErr || !cats || cats.length === 0) {
       setLoading(false);
       return;
     }
