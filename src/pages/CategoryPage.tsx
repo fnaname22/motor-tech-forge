@@ -1,36 +1,70 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { productsByCategory } from "@/data/catalog";
+import { productsByCategory, Product } from "@/data/catalog";
 import { useCategories } from "@/hooks/use-categories";
+import { useProducts } from "@/hooks/use-products";
 import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCard";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PLACEHOLDER_IMAGE } from "@/lib/constants";
+
+export const formatDbProduct = (p: any): Product => {
+  const hasCustomImages = Array.isArray(p.images) && p.images.length > 0 && !p.images[0].startsWith("/seed/");
+  const mainImage = hasCustomImages ? p.images[0] : PLACEHOLDER_IMAGE;
+  const imageList = hasCustomImages ? p.images : [PLACEHOLDER_IMAGE];
+
+  return {
+    id: p.id,
+    sku: p.sku || "",
+    name: p.name,
+    brand: p.brand || "MotorTech",
+    category: p.category,
+    subcategory: p.subcategory,
+    subcategoryName: p.subcategory_name || p.subcategory,
+    price: Number(p.price),
+    oldPrice: p.promotional_price ? Number(p.promotional_price) : undefined,
+    image: mainImage,
+    images: imageList,
+    shortDescription: p.short_description || p.name,
+    description: p.description || p.name,
+    specs: [
+      ...(p.brand ? [{ label: "Marca", value: p.brand }] : []),
+      ...(p.sku ? [{ label: "SKU", value: p.sku }] : []),
+    ],
+    bestSeller: p.best_seller,
+    rating: 4.8,
+    reviewsCount: 12,
+  };
+};
 
 const CategoryPage = () => {
   const { slug = "" } = useParams();
   const [params, setParams] = useSearchParams();
   const sub = params.get("sub");
   const [sort, setSort] = useState("relevance");
-  const [loading, setLoading] = useState(true);
   const { categories } = useCategories();
+
+  // Busca do Supabase
+  const { data: dbProducts, isLoading: loadingDb } = useProducts(slug, sub || undefined);
 
   const category = categories.find((c) => c.slug === slug);
 
-  useEffect(() => {
-    setLoading(true);
-    const t = setTimeout(() => setLoading(false), 400);
-    return () => clearTimeout(t);
-  }, [slug, sub]);
-
   const list = useMemo(() => {
-    let l = productsByCategory(slug);
-    if (sub) l = l.filter((p) => p.subcategory === sub);
-    if (sort === "price-asc") l = [...l].sort((a, b) => a.price - b.price);
-    else if (sort === "price-desc") l = [...l].sort((a, b) => b.price - a.price);
-    else if (sort === "best") l = [...l].sort((a, b) => Number(!!b.bestSeller) - Number(!!a.bestSeller));
-    return l;
-  }, [slug, sub, sort]);
+    let rawList: Product[] = [];
+
+    if (dbProducts && dbProducts.length > 0) {
+      rawList = dbProducts.map(formatDbProduct);
+    } else {
+      rawList = productsByCategory(slug);
+      if (sub) rawList = rawList.filter((p) => p.subcategory === sub);
+    }
+
+    if (sort === "price-asc") rawList = [...rawList].sort((a, b) => a.price - b.price);
+    else if (sort === "price-desc") rawList = [...rawList].sort((a, b) => b.price - a.price);
+    else if (sort === "best") rawList = [...rawList].sort((a, b) => Number(!!b.bestSeller) - Number(!!a.bestSeller));
+    return rawList;
+  }, [slug, sub, sort, dbProducts]);
 
   if (!category) return <div className="container py-20 text-center">Categoria não encontrada.</div>;
 
@@ -107,7 +141,7 @@ const CategoryPage = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {loading
+            {loadingDb
               ? Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)
               : list.length === 0
                 ? <p className="col-span-full text-center text-muted-foreground py-12">Nenhum produto nesta categoria ainda.</p>

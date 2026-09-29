@@ -7,6 +7,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { StarRating } from "./StarRating";
+import { PLACEHOLDER_IMAGE } from "@/lib/constants";
 
 export const ProductCard = ({ product }: { product: Product }) => {
   const { add, open } = useCart();
@@ -25,11 +26,12 @@ export const ProductCard = ({ product }: { product: Product }) => {
     <Link to={`/produto/${product.id}`} className="group bg-card rounded-lg overflow-hidden border border-border hover:border-primary hover:shadow-red transition-all duration-300 flex flex-col">
       <div className="relative bg-muted overflow-hidden aspect-square">
         <img
-          src={product.image}
+          src={product.image || PLACEHOLDER_IMAGE}
           alt={product.name}
           loading="lazy"
           width={800}
           height={800}
+          onError={(e) => { (e.currentTarget as HTMLImageElement).src = PLACEHOLDER_IMAGE; }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         {product.oldPrice && (
